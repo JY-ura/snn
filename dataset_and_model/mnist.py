@@ -66,6 +66,7 @@ def get_dataset_and_model(dataset_path:str, model_path:str, num_pic:int):
     model = NMNIST_MODEL()
     model.load_state_dict(torch.load(model_path))
     model.eval()
+    print()
     
     return data, model 
     
