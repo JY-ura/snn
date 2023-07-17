@@ -1,0 +1,7 @@
+dataset_and_model:
+  _target_: dataset_and_model.mnist.get_dataset_and_model
+  dataset_path: data/NMNIST/
+  model_path: model_files/Pth6.pth
+  num_pic: 10
+
+dataset_name: mnist

@@ -1,0 +1,15 @@
+general_setup:
+  visible_device: '1'
+  num_pic: ${dataset_and_model.numpic}
+
+
+algorithm:
+  is_target: False
+  loss_fn: 'mse'
+  lamda: 0.05
+  num_samples: 100
+  samples_per_draw: 32
+
+optimizer:
+  lr: 0.05
+
