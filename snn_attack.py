@@ -39,31 +39,32 @@ class SNN_ATTACK():
        
 
     def run(self, data, model):
-        for i, (image, label) in enumerate(iter(data)):
+        for i, (orig_image, true_label) in enumerate(iter(data)):
             if i == self.num_pic:
                 return 
             print("No.",i,"/", self.numpic)
             
-            self.attack(model, image, label)
+            self.attack(model, orig_image, true_label)
             
 
             
-    def attack(self, model, image, label):
+    def attack(self, model, orig_img, tr_lab):
         
+        adv_img = orig_img
         for i in range(self.num_samples):
             
             gradient_list = []
             for i in range(self.samples_per_draw):
-                output = forward_pass(model, image)
-                acc = get_acc_function('rate')(output, label)
+                output = forward_pass(model, adv_img)
+                acc = get_acc_function('rate')(output, tr_lab)
                 if acc > 0:
-                    return image
-                loss = get_loss_function(output, label)
+                    return adv_img
+                loss = get_loss_function(output, tr_lab)
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                gradient_list.append(image.grad)
+                gradient_list.append(adv_img.grad)
 
             gradient_mean = torch.mean(gradient_list)
-            image = image - self.lr * gradient_mean
+            adv_img = adv_img - self.lr * gradient_mean
             

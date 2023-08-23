@@ -36,39 +36,66 @@ class ArgSoftmax(autograd.Function):
         jac = prob @ prob.T
         jac = - jac + torch.diag(prob[0])
         return jac @ grad_output
+    
+    
+class DiffArgmax(autograd.Function):
+    """diffentialble argmax
+
+    Args:
+        autograd (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    
+    @staticmethod
+    def forward(ctx, x):
+        assert len(x.shape) == 2, 'only accept tensor with two dim, with dim 2 indicating prob'
+        y = torch.argmax(x, dim=-1).float()
+        ctx.save_for_backward(y)
+        return y
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        y, = ctx.saved_tensors
+        grad_mask = torch.arange(0, 2) == y.unsqueeze(-1)
+        grad = torch.zeros(y.shape + (2,))
+        grad[grad_mask] = grad_output
+        return grad
 
 
-argsoftmax = ArgSoftmax.apply
-
-
-class GumbelSampler(nn.Module):
-    def __init__(self, img, lamda, *args, **kwargs) -> None:
+class GumbelSoftmax(nn.Module):
+    
+    def __init__(self, lamda: float, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.alpha = nn.Parameter((1 - img)*0.9 + 0.05) 
         self.lamda = lamda
         
-    def forward(self,):
-        origianl_shape = self.alpha.shape
         
-        alpha_flatten = self.alpha.flatten()
-        alpha = torch.stack([alpha_flatten, 1-alpha_flatten], dim=-1)
-        alpha_sample = (torch.log(alpha+1e-6) - torch.log(-torch.log(torch.rand_like(alpha)+1e-6))) / self.lamda
-        
-        img_sampled = argsoftmax(alpha_sample)
-        img_sampled = img_sampled.reshape(origianl_shape)
-        return img_sampled
+    def forward(self, alpha):
+        alpha_shape = alpha.shape
+        # alpha = torch.flatten(alpha)
+        u = torch.rand_like(alpha,)
+        g = -torch.log(-torch.log(u + 1e-8))
+        G = torch.softmax((torch.log(alpha) + g )/ self.lamda, dim=-1)
+        output = DiffArgmax.apply(G)
+        return output
     
     
+
 if __name__ == '__main__':
-    img = torch.tensor(
-        [
-            [0,1,0],
-            [1,1,0],
-            [0,0,1]
-        ]
-    )
-    print(img)
-    sampler = GumbelSampler(img, lamda=0.05)
-    print(sampler())
-        
-        
+    alpha = torch.tensor([
+        [0.8,0.2],
+        [0.3,0.7]
+    ])
+    alpha.requires_grad = True
+    x = torch.tensor([0,1]).float()
+    sampler = (0.1)
+    optmizer = torch.optim.SGD((alpha,), 0.01)
+    
+    for _ in range(1000):
+        y = sampler(alpha)
+        loss = torch.sum((x-alpha)**2)
+        loss.backward()
+        optmizer.step()
+        optmizer.zero_grad()
+        print(loss)

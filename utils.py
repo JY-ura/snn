@@ -1,5 +1,2 @@
-from torchvision.datasets import MNIST
+# example.py
 
-
-def load_data():
-    data = MNIST()

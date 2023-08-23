@@ -33,8 +33,8 @@ class NMNIST:
 
         
         batch_size=128
-        trainloader = DataLoader(cached_trainset, batch_size=batch_size, collate_fn= tonic.collation.PadTensors(batch_first=False), shuffle=True)
-        testloader = DataLoader(cached_testset, batch_size=batch_size, collate_fn= tonic.collation.PadTensors(batch_first=False))
+        self.trainloader = DataLoader(cached_trainset, batch_size=batch_size, collate_fn= tonic.collation.PadTensors(batch_first=False), shuffle=True)
+        self.testloader = DataLoader(cached_testset, batch_size=batch_size, collate_fn= tonic.collation.PadTensors(batch_first=False))
 
         
 
@@ -63,10 +63,11 @@ class NMNIST_MODEL(nn.Module):
     
 def get_dataset_and_model(dataset_path:str, model_path:str, num_pic:int):
     data = NMNIST()
+    data = data.testloader
     model = NMNIST_MODEL()
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    print()
+    print("data.shape", data.shape)
     
     return data, model 
     
